@@ -1,0 +1,65 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import statsmodels.api as sm
+import seaborn as sns
+
+
+time_series_data = pd.read_csv('time_series_data.csv', parse_dates=['Date'], index_col='Date')
+
+
+plt.figure(figsize=(10, 6))
+plt.plot(time_series_data.index, time_series_data['Value'], marker='o')
+plt.title('Time Series Data')
+plt.xlabel('Date')
+plt.ylabel('Value')
+plt.xticks(rotation=45)
+plt.show()
+
+
+decomposition = sm.tsa.seasonal_decompose(time_series_data['Value'], model='additive')
+plt.figure(figsize=(12, 8))
+plt.subplot(4, 1, 1)
+plt.plot(decomposition.trend)
+plt.title('Trend')
+
+plt.subplot(4, 1, 2)
+plt.plot(decomposition.seasonal)
+plt.title('Seasonality')
+
+plt.subplot(4, 1, 3)
+plt.plot(decomposition.resid)
+plt.title('Residuals')
+
+plt.subplot(4, 1, 4)
+plt.plot(time_series_data['Value'], label='Original', marker='o')
+plt.plot(decomposition.trend + decomposition.seasonal, label='Trend + Seasonality', linestyle='--')
+plt.legend()
+plt.title('Original vs. Trend + Seasonality')
+plt.tight_layout()
+plt.show()
+
+
+model = sm.tsa.ARIMA(time_series_data['Value'], order=(1, 1, 1))
+results = model.fit()
+forecast = results.predict(start=len(time_series_data), end=len(time_series_data) + 11, typ='levels')
+
+
+plt.figure(figsize=(10, 6))
+plt.plot(time_series_data.index, time_series_data['Value'], marker='o', label='Original')
+plt.plot(forecast.index, forecast, marker='o', label='Forecast', linestyle='--')
+plt.title('Time Series Forecasting with ARIMA')
+plt.xlabel('Date')
+
+plt.ylabel('Value')
+plt.xticks(rotation=45)
+plt.legend()
+plt.show()
+
+
+monthly_averages = time_series_data.resample('M').mean()
+plt.figure(figsize=(10, 6))
+sns.barplot(x=monthly_averages.index.month, y=monthly_averages['Value'])
+plt.title('Monthly Averages')
+plt.xlabel('Month')
+plt.ylabel('Average Value')
+plt.show()
